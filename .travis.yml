@@ -57,6 +57,7 @@ before_script:
   - cd programs
 
 script:
+
   - cd ..
 
 # En caso de compilación exitosa
