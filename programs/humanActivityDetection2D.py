@@ -14,7 +14,6 @@
   * |--------------------------------------|---------------------------------------------------------|
   * | /humanActivityDetection2D/img:o      | Output image with activity detection analysis           |
   * | /humanActivityDetection2D/data:o     | Output result, activity analysis data                   |
-  *
 '''
 
 # Libraries
@@ -37,19 +36,19 @@ print("*************************************************************************
 
 print("")
 print("Starting system ...")
+print("")
 
 print("")
 print("Loading humanActivityDetection2D module ...")
-
-
 print("")
+
 print("")
 print("**************************************************************************")
 print("YARP configuration:")
 print("**************************************************************************")
 print("")
-print("")
 print("Initializing YARP network ...")
+print("")
 
 # Init YARP Network
 yarp.Network.init()
@@ -57,6 +56,7 @@ yarp.Network.init()
 
 print("")
 print("[INFO] Opening image input port with name /humanActivityDetection2D/img:i ...")
+print("")
 
 # Open input image port
 humanActivityDetection2D_portIn = yarp.BufferedPortImageRgb()
@@ -65,6 +65,7 @@ humanActivityDetection2D_portIn.open(humanActivityDetection2D_portNameIn)
 
 print("")
 print("[INFO] Opening image output port with name /humanActivityDetection2D/img:o ...")
+print("")
 
 # Open output image port
 humanActivityDetection2D_portOut = yarp.Port()
@@ -73,6 +74,7 @@ humanActivityDetection2D_portOut.open(humanActivityDetection2D_portNameOut)
 
 print("")
 print("[INFO] Opening data output port with name /humanActivityDetection2D/data:o ...")
+print("")
 
 # Open output data port
 humanActivityDetection2D_portOutDet = yarp.Port()
@@ -98,30 +100,35 @@ out_buf_image.resize(image_w, image_h)
 out_buf_array = np.zeros((image_h, image_w, 3), np.uint8)
 out_buf_image.setExternal(out_buf_array.data, out_buf_array.shape[1], out_buf_array.shape[0])
 
-
 print("")
+print("[INFO] YARP network configured correctly.")
+print("")
+
 print("")
 print("**************************************************************************")
 print("Loading models:")
 print("**************************************************************************")
 print("")
-print("")
-print("Loading models ...")
+print("[INFO] Loading models at " + str(datetime.datetime.now()) + " ...")
 print("")
 
 # Load labels
 print("")
-print("Loading label classes ...")
+print("[INFO] Loading label classes at " + str(datetime.datetime.now()) + " ...")
 print("")
+
 labelClases = open("./../models/humanActivityLabels.txt").read().strip().split("\n")
+
 print("")
 print("[INFO] Labels classes loaded correctly.")
 print("")
 
 print("")
-print("Loading DNN model ...")
+print("[INFO] Loading DNN model at " + str(datetime.datetime.now()) + " ...")
 print("")
+
 dnnNet = cv2.dnn.readNet("./../models/humanActivityModel.onnx")
+
 print("")
 print("[INFO] Models loaded correctly.")
 print("")
@@ -130,20 +137,12 @@ print("")
 print("")
 print("Configuring samples ...")
 print("")
+
 sampleDuration = 16
 sampleSize = 112
-print("")
-print("[INFO] Samples configured correctly.")
-print("")
 
 print("")
-print("")
-print("**************************************************************************")
-print("Waiting for input image source:")
-print("**************************************************************************")
-print("")
-print("")
-print("Waiting input image source ...")
+print("[INFO] Samples configured correctly.")
 print("")
 
 # Control loop
@@ -152,12 +151,11 @@ loopControlReadImage = 0
 while int(loopControlReadImage) == 0:
 
     print("")
-    print("")
     print("**************************************************************************")
-    print("Analyzing image source:")
+    print("Waiting for input image source:")
     print("**************************************************************************")
     print("")
-    print("Analyzing image source ...")
+    print("[INFO] Waiting input image source at " + str(datetime.datetime.now()) + " ...")
     print("")
 
     # Frames array
@@ -180,6 +178,15 @@ while int(loopControlReadImage) == 0:
         rgbFrame = imutils.resize(rgbFrame, 320, 240)
         rgbFrames.append(rgbFrame)
 
+    print("")
+    print("")
+    print("**************************************************************************")
+    print("Analyzing image source:")
+    print("**************************************************************************")
+    print("")
+    print("[INFO] Analyzing image source at " + str(datetime.datetime.now()) + " ...")
+    print("")
+
 	# Analyzing rgb frames array
     blobFromImagesObject = cv2.dnn.blobFromImages(rgbFrames, 1.0, (sampleSize, sampleSize), (114.7748, 107.7354, 99.4750), swapRB = True, crop = True)
     blobFromImagesObject = np.transpose(blobFromImagesObject, (1, 0, 2, 3))
@@ -201,8 +208,6 @@ while int(loopControlReadImage) == 0:
     print("[INFO] Image source analysis done correctly.")
     print("")
 
-    # Get time Detection
-    timeDetection = datetime.datetime.now()
 
     # Print processed data
     print("")
@@ -211,19 +216,24 @@ while int(loopControlReadImage) == 0:
     print("**************************************************************************")
     print("")
     print("[RESULTS] Human activity detection results:")
-    print("Detected activity: " + str(detectedActivity))
-    print("[INFO] Detection time: "+ str(timeDetection))
+    print("")
+    print("[DETECTION] Detected activity: " + str(detectedActivity))
+    print("[DATE] Detection time: "+ str(datetime.datetime.now()))
+    print("")
 
     # Sending processed detection
     outputBottleHumanActivityDetection2D.clear()
-    outputBottleHumanActivityDetection2D.addString("Detected activity:")
+    outputBottleHumanActivityDetection2D.addString("DETECTION:")
     outputBottleHumanActivityDetection2D.addString(str(detectedActivity))
+    outputBottleHumanActivityDetection2D.addString("DATE:")
+    outputBottleHumanActivityDetection2D.addString(str(datetime.datetime.now()))
     humanActivityDetection2D_portOutDet.write(outputBottleHumanActivityDetection2D)
 
     # Sending processed image
     print("")
     print("[INFO] Sending processed image ...")
     print("")
+    
     out_buf_array[:,:] = in_buf_array
     humanActivityDetection2D_portOut.write(out_buf_image)
 
