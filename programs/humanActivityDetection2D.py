@@ -26,6 +26,8 @@ import sys
 import time
 import yarp
 
+print("")
+print("")
 print("**************************************************************************")
 print("**************************************************************************")
 print("                   Program: Human Activity Detection 2D                   ")
@@ -52,7 +54,6 @@ print("")
 
 # Init YARP Network
 yarp.Network.init()
-
 
 print("")
 print("[INFO] Opening image input port with name /humanActivityDetection2D/img:i ...")
@@ -150,92 +151,96 @@ loopControlReadImage = 0
 
 while int(loopControlReadImage) == 0:
 
-    print("")
-    print("**************************************************************************")
-    print("Waiting for input image source:")
-    print("**************************************************************************")
-    print("")
-    print("[INFO] Waiting input image source at " + str(datetime.datetime.now()) + " ...")
-    print("")
+    try:
+        print("")
+        print("**************************************************************************")
+        print("Waiting for input image source:")
+        print("**************************************************************************")
+        print("")
+        print("[INFO] Waiting input image source at " + str(datetime.datetime.now()) + " ...")
+        print("")
 
-    # Frames array
-    rgbFrames = []
+        # Frames array
+        rgbFrames = []
 
-    # Receive frames array with sampleDuration
-    for i in range(0, sampleDuration):
+        # Receive frames array with sampleDuration
+        for i in range(0, sampleDuration):
 
-        # Receive image source
-        frame = humanActivityDetection2D_portIn.read()
+            # Receive image source
+            frame = humanActivityDetection2D_portIn.read()
 
-        # Buffer processed image
-        in_buf_image.copy(frame)
-        assert in_buf_array.__array_interface__['data'][0] == in_buf_image.getRawImage().__int__()
+            # Buffer processed image
+            in_buf_image.copy(frame)
+            assert in_buf_array.__array_interface__['data'][0] == in_buf_image.getRawImage().__int__()
 
-        # YARP -> OpenCV
-        rgbFrame = in_buf_array[:, :, ::-1]
+            # YARP -> OpenCV
+            rgbFrame = in_buf_array[:, :, ::-1]
 
-        # Resize rgbFrame
-        rgbFrame = imutils.resize(rgbFrame, 320, 240)
-        rgbFrames.append(rgbFrame)
+            # Resize rgbFrame
+            rgbFrame = imutils.resize(rgbFrame, 320, 240)
+            rgbFrames.append(rgbFrame)
 
-    print("")
-    print("")
-    print("**************************************************************************")
-    print("Analyzing image source:")
-    print("**************************************************************************")
-    print("")
-    print("[INFO] Analyzing image source at " + str(datetime.datetime.now()) + " ...")
-    print("")
+        print("")
+        print("**************************************************************************")
+        print("Analyzing image source:")
+        print("**************************************************************************")
+        print("")
+        print("[INFO] Analyzing image source at " + str(datetime.datetime.now()) + " ...")
+        print("")
 
-	# Analyzing rgb frames array
-    blobFromImagesObject = cv2.dnn.blobFromImages(rgbFrames, 1.0, (sampleSize, sampleSize), (114.7748, 107.7354, 99.4750), swapRB = True, crop = True)
-    blobFromImagesObject = np.transpose(blobFromImagesObject, (1, 0, 2, 3))
-    blobFromImagesObject = np.expand_dims(blobFromImagesObject, axis = 0)
+    	# Analyzing rgb frames array
+        blobFromImagesObject = cv2.dnn.blobFromImages(rgbFrames, 1.0, (sampleSize, sampleSize), (114.7748, 107.7354, 99.4750), swapRB = True, crop = True)
+        blobFromImagesObject = np.transpose(blobFromImagesObject, (1, 0, 2, 3))
+        blobFromImagesObject = np.expand_dims(blobFromImagesObject, axis = 0)
 
-    # Recognizing human activity
-    dnnNet.setInput(blobFromImagesObject)
-    predictionResults = dnnNet.forward()
+        # Recognizing human activity
+        dnnNet.setInput(blobFromImagesObject)
+        predictionResults = dnnNet.forward()
 
-    # Compare with label classes index
-    detectedActivity = labelClases[np.argmax(predictionResults)]
-    detectedActivity = str(detectedActivity)
+        # Compare with label classes index
+        detectedActivity = labelClases[np.argmax(predictionResults)]
+        detectedActivity = str(detectedActivity)
 
-    # draw the predicted activity on the frame
-    cv2.rectangle(in_buf_array, (0, 0), (300, 40), (0, 0, 0), -1)
-    cv2.putText(in_buf_array, detectedActivity, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+        # draw the predicted activity on the frame
+        cv2.rectangle(in_buf_array, (0, 0), (300, 40), (0, 0, 0), -1)
+        cv2.putText(in_buf_array, detectedActivity, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
 
-    print("")
-    print("[INFO] Image source analysis done correctly.")
-    print("")
+        print("")
+        print("[INFO] Image source analysis done correctly.")
+        print("")
 
+        # Print processed data
+        print("")
+        print("**************************************************************************")
+        print("Results resume:")
+        print("**************************************************************************")
+        print("")
+        print("[RESULTS] Human activity detection results:")
+        print("")
+        print("[DETECTION] Detected activity: " + str(detectedActivity))
+        print("[DATE] Detection time: "+ str(datetime.datetime.now()))
+        print("")
 
-    # Print processed data
-    print("")
-    print("**************************************************************************")
-    print("Results resume:")
-    print("**************************************************************************")
-    print("")
-    print("[RESULTS] Human activity detection results:")
-    print("")
-    print("[DETECTION] Detected activity: " + str(detectedActivity))
-    print("[DATE] Detection time: "+ str(datetime.datetime.now()))
-    print("")
+        # Sending processed detection
+        outputBottleHumanActivityDetection2D.clear()
+        outputBottleHumanActivityDetection2D.addString("DETECTION:")
+        outputBottleHumanActivityDetection2D.addString(str(detectedActivity))
+        outputBottleHumanActivityDetection2D.addString("DATE:")
+        outputBottleHumanActivityDetection2D.addString(str(datetime.datetime.now()))
+        humanActivityDetection2D_portOutDet.write(outputBottleHumanActivityDetection2D)
 
-    # Sending processed detection
-    outputBottleHumanActivityDetection2D.clear()
-    outputBottleHumanActivityDetection2D.addString("DETECTION:")
-    outputBottleHumanActivityDetection2D.addString(str(detectedActivity))
-    outputBottleHumanActivityDetection2D.addString("DATE:")
-    outputBottleHumanActivityDetection2D.addString(str(datetime.datetime.now()))
-    humanActivityDetection2D_portOutDet.write(outputBottleHumanActivityDetection2D)
+        # Sending processed image
+        print("")
+        print("[INFO] Sending processed image ...")
+        print("")
 
-    # Sending processed image
-    print("")
-    print("[INFO] Sending processed image ...")
-    print("")
-    
-    out_buf_array[:,:] = in_buf_array
-    humanActivityDetection2D_portOut.write(out_buf_image)
+        out_buf_array[:,:] = in_buf_array
+        humanActivityDetection2D_portOut.write(out_buf_image)
+
+    except:
+        print("")
+        print("[ERROR] Empty frame.")
+        print("")
 
 # Close ports
 print("[INFO] Closing ports ...")
